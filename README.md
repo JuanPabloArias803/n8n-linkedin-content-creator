@@ -39,6 +39,8 @@ El objetivo es mantener una presencia activa y profesional en LinkedIn, generand
 
 ## 📌 Notas
 - Este flujo es un ejemplo base y puede integrarse con otros nodos para enriquecer el contenido.
-- Asegúrate de respetar las políticas de uso de LinkedIn para evitar bloqueos por publicaciones automatizadas.  
+- Asegúrate de respetar las políticas de uso de LinkedIn para evitar bloqueos por publicaciones automatizadas.
+- Para ver resultados creados por el flujo, puedes visitar mi perfil de LinkedIn www.linkedin.com/in/juanarias803.
+- Con este flujo estoy participando en el concurso de n8n de Platzi, agradezco de corazón si me puedes apoyar con un me gusta en mi comentario https://platzi.com/discusiones/concurso-n8n/5428381-link-workflow-json-httpsgithubcomjuanpabloarias803n8n-linkedin-content-creatorgithttpsgithubcomjuanpabloarias803n8n-linkedin-content-creatorgit-descripcion-este-flujo-de-n8n-aprovecha-la-integracion-de-serpapi-y-el-api-de-openai-para-crear-y-publicar-diar/
 
 ---
