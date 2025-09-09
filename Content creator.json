@@ -1,0 +1,1905 @@
+{
+  "name": "Content creator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -112,
+        -152
+      ],
+      "id": "2efc70c7-c4eb-4180-9382-e53a97cded61",
+      "name": "Ejecutar diariamente"
+    },
+    {
+      "parameters": {
+        "operation": "google_news",
+        "q": "IA",
+        "additionalFields": {
+          "gl": "co",
+          "hl": "es"
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-serpapi.serpApi",
+      "typeVersion": 1,
+      "position": [
+        112,
+        -152
+      ],
+      "id": "1246e341-6f4e-4b5d-ac2d-fcc0d209fdaf",
+      "name": "Buscador de noticias Google",
+      "credentials": {
+        "serpApi": {
+          "id": "scbFYSSnKfSMEvrP",
+          "name": "SerpApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8566c0a4-493b-4072-b3a1-ccb1a53ea0a0",
+              "name": "Link",
+              "value": "={{ $('Buscador de noticias Google').item.json.news_results[0].link }}",
+              "type": "string"
+            },
+            {
+              "id": "c6473680-76bd-4af4-91cb-5704c47ea683",
+              "name": "Title",
+              "value": "={{ $('Buscador de noticias Google').item.json.news_results[0].title }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        -152
+      ],
+      "id": "91243cf8-cc2f-4c94-838a-f8e2b8521299",
+      "name": "Definir título y link"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-5-mini\",\n  \"tools\":[\n        {\n            \"type\": \"web_search\"\n        }\n    ],\n  \"input\":[\n        {\n            \"role\": \"user\",\n            \"content\": \"Genera un copywriting listo para redes sociales a partir del resumen del link: {{ $json.Link }}. Formato: menos de 350 caracteres, tono profesional, con emojis, agrega hashtags sugeridos, no incluyas el link. Devuelve solo el copy final.\"\n        }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        -152
+      ],
+      "id": "ee045e09-a4a2-428e-ac46-96a8bc39df37",
+      "name": "OpenAI buscar web",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "0fmXtyWTpSKF9XQi",
+          "name": "OpenAi Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        784,
+        -152
+      ],
+      "id": "69720195-d92c-427c-8535-1492596bf2b8",
+      "name": "Dividir outputs"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1008,
+        -152
+      ],
+      "id": "0c81b51f-b275-48c2-a7d5-33925e053701",
+      "name": "Outputs Loop"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c2f1b263-2857-4eea-a223-e01d05430caf",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "message",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1232,
+        -224
+      ],
+      "id": "16edc5c8-3135-4433-95e6-346a8c7c7994",
+      "name": "output_type=message"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Iteración",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        -56
+      ],
+      "id": "519e3645-5b3b-4d72-a101-4474cfb23144"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5e5cb1c0-7fd0-4345-acd9-822885f7501a",
+              "name": "IAText",
+              "value": "={{ $json.content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1456,
+        -272
+      ],
+      "id": "9d35db63-77e5-4659-97f5-76b7210cd8f9",
+      "name": "Definir texto IA"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "model": "gpt-image-1",
+        "prompt": "=Digital illustration, no text or lettering, based on the news headline: {{ $('Definir título y link').item.json.Title }}",
+        "options": {
+          "size": "1024x1536"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1680,
+        -272
+      ],
+      "id": "c58bda2e-a8b9-40a2-898f-74b05d15c201",
+      "name": "Generar imagen del post",
+      "alwaysOutputData": false,
+      "credentials": {
+        "openAiApi": {
+          "id": "3N4gQafe0qfrbMT8",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "person": "VVbqnLPiW8",
+        "text": "={{ $('Definir texto IA').item.json.IAText }}\nFuente: {{ $('Definir título y link').item.json.Link }}",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        1904,
+        -272
+      ],
+      "id": "626b0386-7aee-47bd-9000-25e0256971b4",
+      "name": "Crear post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "5nGSWqZodeEAB0yt",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Bearer token\nPoner en la credencial el API Key de Open AI"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        496,
+        16
+      ],
+      "typeVersion": 1,
+      "id": "fef83690-3880-4830-b2a1-6a6134f71222",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## SerpAPI Node\nInstalar el nodo de SerpAPI para usarlo"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        48,
+        32
+      ],
+      "typeVersion": 1,
+      "id": "95b21252-2daf-496a-8f76-e9ea09dbe063",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {
+    "Buscador de noticias Google": [
+      {
+        "json": {
+          "search_metadata": {
+            "id": "68bf44b55c9301f3806a3d78",
+            "status": "Success",
+            "json_endpoint": "https://serpapi.com/searches/2e0356e798f5b31f/68bf44b55c9301f3806a3d78.json",
+            "created_at": "2025-09-08 21:03:49 UTC",
+            "processed_at": "2025-09-08 21:03:49 UTC",
+            "google_news_url": "https://news.google.com/search?q=IA&hl=es&gl=CO",
+            "raw_html_file": "https://serpapi.com/searches/2e0356e798f5b31f/68bf44b55c9301f3806a3d78.html",
+            "total_time_taken": 2.75
+          },
+          "search_parameters": {
+            "engine": "google_news",
+            "gl": "co",
+            "hl": "es",
+            "q": "IA"
+          },
+          "news_results": [
+            {
+              "position": 1,
+              "title": "Empresas vuelven a contratar humanos ante el fracaso de la inteligencia artificial",
+              "source": {
+                "name": "Infobae",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.infobae.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.infobae.com/tecno/2025/09/07/empresas-vuelven-a-contratar-humanos-ante-el-fracaso-de-la-inteligencia-artificial/",
+              "thumbnail": "https://www.infobae.com/resizer/v2/5K46RS2BQRAJJJUR6A7SF67GW4.png?auth=b760062aa15959a4a62331d49b5ab1c1aed120d99d90215690bf60b157c7c590&smart=true&width=1200&height=675&quality=85",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNUlkbWhqYTFOeFdVdHlkRVJUVFJDZkF4ampCU2dLTWdrQk1KTHhHQ2l4U0FJ",
+              "date": "09/07/2025, 02:13 AM, +0000 UTC"
+            },
+            {
+              "position": 2,
+              "title": "El acuerdo extrajudicial que le da un vuelco a la batalla legal de los autores contra la IA",
+              "source": {
+                "name": "EL PAÍS",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://elpais.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Manuel González Pascual"
+                ]
+              },
+              "link": "https://elpais.com/tecnologia/2025-09-08/el-acuerdo-extrajudicial-que-le-da-un-vuelco-a-la-batalla-legal-de-los-autores-contra-la-ia.html",
+              "thumbnail": "https://imagenes.elpais.com/resizer/v2/AFQNGBIAS62QZUHGVFWU7JAKIE.jpg?auth=7bcccc7b0b4343bb3bb797b50bca35ce7cc8be6951d430cb0f30646b37bc9373&width=1960&height=1103&smart=true",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNU1kVFpxVEZKYWJGRkNabUZ6VFJDZkF4amlCU2dLTWdhOU01SXlIUWs",
+              "date": "09/08/2025, 03:20 AM, +0000 UTC"
+            },
+            {
+              "position": 3,
+              "title": "China ya no se conforma con alejarse de NVIDIA. Su siguiente paso es el corazón de la IA con un sistema...",
+              "source": {
+                "name": "Xataka",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.xataka.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.xataka.com/robotica-e-ia/china-no-se-conforma-alejarse-nvidia-su-siguiente-paso-corazon-ia-sistema-que-rompe-moldes",
+              "thumbnail": "https://i.blogs.es/2c6926/ia-china-portada/1366_2000.jpeg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNHlVSGQ1Wm1aTFVsQmxSV3M0VFJEdEF4anVCQ2dLTWdZaGRKQ01yUVk",
+              "date": "09/08/2025, 08:31 PM, +0000 UTC"
+            },
+            {
+              "position": 4,
+              "title": "Cómo aprender IA desde cero, gratis, en Colombia",
+              "source": {
+                "name": "ELTIEMPO.COM",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.eltiempo.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.eltiempo.com/tecnosfera/novedades-tecnologia/como-aprender-ia-desde-cero-gratis-en-colombia-3488538",
+              "thumbnail": "https://imagenes2.eltiempo.com/files/image_1200_600/uploads/2024/08/25/66cbce552c0fc.jpeg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXlSV05WTVRKZmVHNVZiRXhMVFJDSEF4aVBCaWdLTWdhUklZaUx1UVU",
+              "date": "09/08/2025, 03:00 AM, +0000 UTC"
+            },
+            {
+              "position": 5,
+              "title": "La nueva IA que se implementará en los supermercados de Colombia, ¿De qué trata?",
+              "source": {
+                "name": "Caracol Radio",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://caracol.com.co&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://caracol.com.co/2025/09/08/la-nueva-ia-que-se-implementara-en-los-supermercados-de-colombia-de-que-trata/",
+              "thumbnail": "https://caracol.com.co/resizer/v2/https%3A%2F%2Fcloudfront-us-east-1.images.arcpublishing.com%2Fprisaradioco%2F67TNEK6YAFAANDIK3HYPNCPHDU.jpeg?auth=820647a058afa94a9f1c62a94359000fd342628fbd5c67332b7e40927e87fc13&height=800&width=1200&quality=70&smart=true",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iI0NnNXJMVzgxVEZSRFVrdGtTM2xvVFJERUF4aW1CU2dLTWdB",
+              "date": "09/08/2025, 01:37 AM, +0000 UTC"
+            },
+            {
+              "position": 6,
+              "title": "Un experto revela si la IA te va a quitar el trabajo y advierte: “Depende de dónde trabajes”",
+              "source": {
+                "name": "Diario AS",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://as.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "David Arroyo Vargas"
+                ]
+              },
+              "link": "https://as.com/meristation/betech/un-experto-revela-si-la-ia-te-va-a-quitar-el-trabajo-y-advierte-depende-de-donde-trabajes-n/",
+              "thumbnail": "https://img.asmedia.epimg.net/resizer/v2/EMPMU4ZAURBQTNF6LNFT6OBCTQ.JPG?auth=073ef74b612682e3a54417accc4d85a315179d8f76d6eccf181310d9f7392d35&width=1472&height=828&smart=true",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNVFhMkppYVdSME1IZEhWRjh6VFJDZkF4ampCU2dLTWdZQlFZck9IQVk",
+              "date": "09/08/2025, 06:05 AM, +0000 UTC"
+            },
+            {
+              "position": 7,
+              "title": "Novias creadas con IA: la nueva tecnología a la que recurren cada vez más hombres para evitar el rechazo",
+              "source": {
+                "name": "La Nación",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.lanacion.com.ar&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Ailén Rocío Vila"
+                ]
+              },
+              "link": "https://www.lanacion.com.ar/sociedad/novias-creadas-con-ia-la-nueva-tecnologia-a-la-que-recurren-cada-vez-mas-hombres-para-evitar-el-nid06092025/",
+              "thumbnail": "https://www.lanacion.com.ar/resizer/v2/algunas-aplicaciones-ofrecen-una-amplia-gama-de-BQKZCVLCK5GETCDTSIQHVZELQY.PNG?auth=e40a2938cedf124683358cf4ce3bbe6e211e05dcd146c51c1e4d695add3ba395&width=420&height=280&quality=70&smart=true",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNHhNV04xVEZwblRFaDRVbDlhVFJDWUFoaWtBeWdLTWdZdFZaU3VKUWc",
+              "date": "09/06/2025, 03:23 PM, +0000 UTC"
+            },
+            {
+              "position": 8,
+              "title": "IA le puso fin al misterio: los 6 lugares escondidos de Colombia que nadie visita",
+              "source": {
+                "name": "Portafolio",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.portafolio.co&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.portafolio.co/economia/regiones/ia-le-puso-fin-al-misterio-los-6-lugares-escondidos-de-colombia-que-nadie-visita-639411",
+              "thumbnail": "https://www.portafolio.co/files/article_content/uploads/2025/09/08/68bf0af948a54.jpeg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXNkVXBGYVZjMlR6Uk5WbVJKVFJEQ0F4allCQ2dLTWdZMVlJNGFwQWc",
+              "date": "09/08/2025, 05:41 PM, +0000 UTC"
+            },
+            {
+              "position": 9,
+              "title": "Un ‘iPhone Air,’ aumentos de precio e IA: Qué esperar del evento más grande del año de Apple",
+              "source": {
+                "name": "CNN en Español",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://cnnespanol.cnn.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Lisa Eadicicco"
+                ]
+              },
+              "link": "https://cnnespanol.cnn.com/2025/09/07/ciencia/iphone-air-evento-apple-septiembre-trax",
+              "thumbnail": "https://media.cnn.com/api/v1/images/stellar/prod/gettyimages-2232762025-20250907235306758.jpg?c=original",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iMkNnNTFlVE5tTlhVemEyaEJkMDFKVFJERUF4aW1CU2dLTWdzQkFJamxEU3NlRU1rZVZB",
+              "date": "09/07/2025, 11:59 PM, +0000 UTC"
+            },
+            {
+              "position": 10,
+              "title": "Cantantes contra IA: La batalla musical comienza",
+              "source": {
+                "name": "Cointribune",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.cointribune.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.cointribune.com/es/puede-la-ia-robar-el-protagonismo-a-los-artistas/",
+              "thumbnail": "https://www.cointribune.com/app/uploads/2025/09/IA-MUSIQUE-ARTISTES.png",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNWxZazFWU0hSVFUxZEVabWREVFJERUF4aW1CU2dLTWdrTlFZcW1vdWcxYVFJ",
+              "date": "09/05/2025, 07:00 AM, +0000 UTC"
+            },
+            {
+              "position": 11,
+              "title": "Truco para crear imágenes de figuras de acción con la IA de Google Gemini y gratis",
+              "source": {
+                "name": "Infobae",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.infobae.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.infobae.com/tecno/2025/09/08/truco-para-crear-imagenes-de-figuras-de-accion-con-la-ia-de-google-gemini-y-gratis/",
+              "thumbnail": "https://www.infobae.com/resizer/v2/DIFJ7A5XUBF5FAJP773MUMOM7Y.png?auth=7b08ca4c4bdb7cd5c591b3cd996bc93787894c21241c8c46a24480cdfc38f827&smart=true&width=1200&height=675&quality=85",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXlaamhsYzBWTFRsTjRWemN4VFJDZkF4ampCU2dLTWdZUlE0d3ZIUWs",
+              "date": "09/08/2025, 06:36 PM, +0000 UTC"
+            },
+            {
+              "position": 12,
+              "title": "Avances en IA redefinen la farmacéutica: nuevas terapias, más rápidas y personalizadas para el 2030",
+              "source": {
+                "name": "consultorsalud",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://consultorsalud.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Tatiana Asprilla"
+                ]
+              },
+              "link": "https://consultorsalud.com/avances-en-ia-redefinen-la-farmaceutica/",
+              "thumbnail": "https://consultorsalud.com/wp-content/uploads/2025/09/Avances-en-IA-redefinen-la-farmaceutica-nuevas-terapias-mas-rapidas-y-personalizadas.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNHphREJ4VW1ZNWVEQlZhbUpaVFJDZkF4ampCU2dLTWdZQk5wSktJZ28",
+              "date": "09/08/2025, 03:59 PM, +0000 UTC"
+            },
+            {
+              "position": 13,
+              "title": "La IA de OpenAI debutará en la gran pantalla con una película animada",
+              "source": {
+                "name": "WIRED",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://es.wired.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Fernanda Gonzalez"
+                ]
+              },
+              "link": "https://es.wired.com/articulos/la-ia-de-openai-debutara-en-la-gran-pantalla-con-una-pelicula-animada",
+              "thumbnail": "https://media.es.wired.com/photos/68bf15cf0d2cbcfd3909eca6/master/w_2560%2Cc_limit/OpenAI%2520cine%2520IA%25202197363759.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNDFSWGR2Y2tGWkxVWnFNMlEwVFJEYUF4aUhCU2dLTWdtTlVaS3BwYWU1YUFJ",
+              "date": "09/08/2025, 06:08 PM, +0000 UTC"
+            },
+            {
+              "position": 14,
+              "title": "Sin empatía y haciendo la pelota: la IA es un pésimo terapeuta",
+              "source": {
+                "name": "EL PAÍS",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://elpais.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Marc Augustin"
+                ]
+              },
+              "link": "https://elpais.com/ideas/2025-09-08/sin-empatia-y-haciendo-la-pelota-la-ia-es-un-pesimo-terapeuta.html",
+              "thumbnail": "https://imagenes.elpais.com/resizer/v2/JW67XM6VAJGQLKFUCQZG6GBDTU.jpg?auth=6e565d3974ba44b7b2da5b4c49a1f12a82ac5df2e233127995eeb707a882b01d&width=1960&height=1103&smart=true",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNWpMVGxrTmpsR2NYcFBPSGxuVFJDZkF4amlCU2dLTWdrQk1JeXhzQ1hReEFJ",
+              "date": "09/08/2025, 03:30 AM, +0000 UTC"
+            },
+            {
+              "position": 15,
+              "title": "Google Cloud y Qualcomm refuerzan cooperación en torno a agentes de IA ⚔️",
+              "source": {
+                "name": "XTB.com",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.xtb.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.xtb.com/lat/analisis-y-noticias/analisis-de-mercado/google-cloud-y-qualcomm-refuerzan-cooperacion-en-torno-a-agentes-de-ia",
+              "thumbnail": "https://xtb.scdn5.secure.raxcdn.com/default/0104/20/452f9369-3fec-4dae-804b-5df9998f4edf/qcomm.png",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iJ0NnNUtWM2RpY214ck1GUnBaMjh6VFJESkFSajdBU2dCTWdPSkVRdw",
+              "date": "09/08/2025, 01:50 PM, +0000 UTC"
+            },
+            {
+              "position": 16,
+              "title": "Telcos y OTT enfrentan el gran desafío de colaborar estratégicamente con IA para sostener el negocio digital en Latinoamérica",
+              "source": {
+                "name": "TeleSemana.com",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.telesemana.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Andrea Catalano"
+                ]
+              },
+              "link": "https://www.telesemana.com/blog/2025/09/08/telcos-y-ott-enfrentan-el-gran-desafio-de-colaborar-estrategicamente-con-ia-para-sostener-el-negocio-digital-en-latinoamerica/",
+              "thumbnail": "https://www.telesemana.com/wp-content/uploads/2016/04/Netflix4.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXpVMVJ5Wm0xMU9YWXlNbEJwVFJEVUFoalFCU2dLTWdZQlpJeHhNUWc",
+              "date": "09/08/2025, 07:31 PM, +0000 UTC"
+            },
+            {
+              "position": 17,
+              "title": "Kapital Grupo Financiero se convierte en el primer unicornio de IA en América Latina tras duplicar su valuación a 1.300 millones de dólares",
+              "source": {
+                "name": "La Nota Económica",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://lanotaeconomica.com.co&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://lanotaeconomica.com.co/movidas-empresarial/kapital-grupo-financiero-se-convierte-en-el-primer-unicornio-de-ia-en-america-latina-tras-duplicar-su-valuacion-a-1-300-millones-de-dolares/",
+              "thumbnail": "https://lanotaeconomica.com.co/wp-content/uploads/elementor/thumbs/Foto-2_Rene-Saul-Farro_CEO-KAPITAL-2025-rbgl28e7qy8sobk9p0e43gg04wzio6ns014e0gylx8.jpeg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNVRRek5uV0ZKb1pESXdPWEZaVFJDTEF4aUlCaWdLTWdheEJLQ1BrUW8",
+              "date": "09/08/2025, 03:30 PM, +0000 UTC"
+            },
+            {
+              "position": 18,
+              "title": "La Inteligencia artificial: la nueva arma de los extorsionistas en el departamento de Bolívar",
+              "source": {
+                "name": "Policía Nacional de Colombia",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.policia.gov.co&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.policia.gov.co/noticia/inteligencia-artificial-nueva-arma-los-extorsionistas-en-departamento-bolivar",
+              "thumbnail": "https://www.policia.gov.co/sites/default/files/noticias/Mantener%20la%20calma%20%281%29.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNDVUM3BLU1dkUWJtUnFNVXBHVFJDdkFSaWhBaWdCTWdhQmxvNGp0Z1k",
+              "date": "09/08/2025, 04:34 PM, +0000 UTC"
+            },
+            {
+              "position": 19,
+              "title": "Cinco formas en que la IA puede ayudarle a preparar su entrevista de trabajo",
+              "source": {
+                "name": "Forbes Colombia",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://forbes.co&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://forbes.co/2025/09/08/capital-humano/como-usar-la-ia-para-preparar-una-entrevista-de-trabajo/",
+              "thumbnail": "https://forbes.co/_next/image?url=https%3A%2F%2Fcdn.forbes.co%2F2025%2F09%2F4683.jpg&w=3840&q=75",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNUphRFJhY1U5ZkxWUTFObUV4VFJERUF4aW1CU2dLTWdhTkVwZ1RFUW8",
+              "date": "09/08/2025, 03:41 PM, +0000 UTC"
+            },
+            {
+              "position": 20,
+              "title": "DE-CIX lanza el primer punto de intercambio de internet para IA",
+              "source": {
+                "name": "Data Center Dynamics",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.datacenterdynamics.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Ana Ribeiro"
+                ]
+              },
+              "link": "https://www.datacenterdynamics.com/es/noticias/de-cix-lanza-el-primer-punto-de-intercambio-de-internet-para-ia/",
+              "thumbnail": "https://media.datacenterdynamics.com/media/images/Tung_Nguyen_Pixabay_ai-7111802_192.2e16d0ba.fill-280x150.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNHlUSFY1WkVSbFNXRlFiekIyVFJDV0FSaVlBaWdCTWdtNVVvUVNWYU5jYUFJ",
+              "date": "09/08/2025, 04:58 PM, +0000 UTC"
+            },
+            {
+              "position": 21,
+              "title": "Los chatbots de IA difunden falsedades en 1 de cada 3 respuestas: ¿Qué chatbot miente más?",
+              "source": {
+                "name": "Euronews.com",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://es.euronews.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Anna Desmarais"
+                ]
+              },
+              "link": "https://es.euronews.com/next/2025/09/08/que-chatbot-de-inteligencia-artificial-ofrece-mas-informacion-falsa-1-de-cada-3-respuestas",
+              "thumbnail": "https://images.euronews.com/articles/stories/09/45/26/60/1536x864_cmsv2_fcf9908b-f1f4-546c-a1b8-4478a35e2c8a-9452660.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNHlSMVZIYUhWd0xWTTFRaTFFVFJDZkF4ampCU2dLTWdhQk01U09MUWM",
+              "date": "09/08/2025, 04:00 AM, +0000 UTC"
+            },
+            {
+              "position": 22,
+              "title": "Vodafone está probando una modelo de IA como presentadora",
+              "source": {
+                "name": "Digital Trends Español",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://es.digitaltrends.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Diego Bastarrica"
+                ]
+              },
+              "link": "https://es.digitaltrends.com/tendencias/vodafone-esta-probando-una-modelo-de-ia-como-presentadora/",
+              "thumbnail": "https://es.digitaltrends.com/wp-content/uploads/2025/09/Vodafone-AI-ad-berlin.webp?resize=1200%2C720&p=1",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNXdhSFp3Y21oS1lUaGpRM1JNVFJDdEF4akxCU2dLTWdrTk1aN0dudWsxaHdJ",
+              "date": "09/08/2025, 07:03 PM, +0000 UTC"
+            },
+            {
+              "position": 23,
+              "title": "Nano Banana: así es la nueva IA de Google para retocar fotos",
+              "source": {
+                "name": "Blog de Orange",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://blog.orange.es&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://blog.orange.es/consejos-y-trucos/nano-banana-ia-google-retocar-fotos/",
+              "thumbnail": "https://blog.orange.es/wp-content/uploads/sites/4/2025/09/fruit-4415864_1280.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNWZWV1oyWW5CZlNUazRXamRLVFJDZkF4ampCU2dLTWdhVm9ZZ3J4UVE",
+              "date": "09/08/2025, 09:52 AM, +0000 UTC"
+            },
+            {
+              "position": 24,
+              "title": "Google y la NASA desarrollan IA para la atención médica en el espacio",
+              "source": {
+                "name": "DPL News",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://dplnews.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://dplnews.com/google-y-nasa-desarrollan-ia-atencion-medica-espacio/",
+              "thumbnail": "https://dplnews.com/wp-content/uploads/2025/09/dplnews_astronauta_mc80925-scaled.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iI0NnNVZUbGc1T0VsNFVrRm1VV2huVFJDZ0F4amhCU2dLTWdB",
+              "date": "09/08/2025, 03:51 PM, +0000 UTC"
+            },
+            {
+              "position": 25,
+              "title": "Lenovo revoluciona su catálogo con PCs, tablets, gaming y smartphones Motorola impulsados por IA",
+              "source": {
+                "name": "Marketing Directo",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.marketingdirecto.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.marketingdirecto.com/digital-general/digital/lenovo-presenta-dispositivos-ia-consumo-empresas-moviles",
+              "thumbnail": "https://www.marketingdirecto.com/wp-content/uploads/2025/09/Trend-or-Hype-Am-I-Thinking-Straight-2025-09-08T170603.994.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNXBiMmg1VVdkU2RITjVPVTlwVFJDZkF4ampCU2dLTWdrQk1JcWlKS2JJNWdJ",
+              "date": "09/08/2025, 03:16 PM, +0000 UTC"
+            },
+            {
+              "position": 26,
+              "title": "La IA ayuda a las personas mayores a leer y reportar la presión arterial en casa",
+              "source": {
+                "name": "Infobae",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.infobae.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.infobae.com/salud/2025/09/08/la-ia-ayuda-a-las-personas-mayores-a-leer-y-reportar-la-presion-arterial-en-casa/",
+              "thumbnail": "https://www.infobae.com/resizer/v2/NN2KBTJSPJDUDDHSNUHVIKO47Y.jpg?auth=dd7c03ba82a87c5d414811632c0c907223894242a436aa6d53e8dafe7c006b33&smart=true&width=1200&height=675&quality=85",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNVhUV1pmVlRrME9VMVVaRXB1VFJDZkF4ampCU2dLTWdhbGM0RHNxUWM",
+              "date": "09/08/2025, 05:53 PM, +0000 UTC"
+            },
+            {
+              "position": 27,
+              "title": "La IA ya está cambiando el empleo: empresa eliminó 4.000 puestos para darle trabajo a esta tecnología",
+              "source": {
+                "name": "Infobae",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.infobae.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.infobae.com/tecno/2025/09/08/la-ia-ya-esta-cambiando-el-empleo-empresa-elimino-4000-puestos-para-darle-trabajo-a-esta-tecnologia/",
+              "thumbnail": "https://www.infobae.com/resizer/v2/LGJAS5EGF5DXNLK3W3NOSMTNUY.jpg?auth=66dee79487d48563fac6e7d5e17e935797c423f0982917074c3c8ae15ec6593a&smart=true&width=1200&height=675&quality=85",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNUVibWR1TWxoM1puQnpXSGxsVFJDZkF4ampCU2dLTWdZaE1JcU1wQWM",
+              "date": "09/08/2025, 01:55 PM, +0000 UTC"
+            },
+            {
+              "position": 28,
+              "title": "CEO de Nvidia predice una semana laboral de cuatro días gracias a la IA, pero advierte riesgos",
+              "source": {
+                "name": "Infobae",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.infobae.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.infobae.com/tecno/2025/09/08/ceo-de-nvidia-predice-una-semana-laboral-de-cuatro-dias-gracias-a-la-ia-pero-advierte-riesgos/",
+              "thumbnail": "https://www.infobae.com/resizer/v2/FTHX55VKH5CTNFIJ7WB5WUKEM4.JPG?auth=0ef039422355da3466e82a6388a5a94fbce6ebbe68542df7349491836c68d8d6&smart=true&width=1200&height=675&quality=85",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXpiV1pYYVZBME5HVnlSR2hhVFJDZkF4ampCU2dLTWdhWk5ack5IUWs",
+              "date": "09/08/2025, 07:45 PM, +0000 UTC"
+            },
+            {
+              "position": 29,
+              "title": "La IA emocional redefine el concepto de la experiencia de cliente",
+              "source": {
+                "name": "Periodico PublicidAD",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.periodicopublicidad.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.periodicopublicidad.com/articulo/negocios/ia-emocional-redefine-concepto-experiencia-cliente/20250908104237162372.html",
+              "thumbnail": "https://www.periodicopublicidad.com/media/lapublicidad/images/2024/10/21/2024102110101116298.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXllVFZFZVdkeWJXMU5lRjk2VFJDS0F4aTlCU2dLTWdhcE5Zak5HUWs",
+              "date": "09/08/2025, 08:42 AM, +0000 UTC"
+            },
+            {
+              "position": 30,
+              "title": "“Neuralink” vs. Imago Dei: Lo que la antropología católica tiene que decir sobre la tecnología y la IA de Musk",
+              "source": {
+                "name": "ACI Prensa",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.aciprensa.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Andrew Likoudis"
+                ]
+              },
+              "link": "https://www.aciprensa.com/noticias/116985/neuralink-vs-imago-dei-lo-que-la-antropologia-catolica-tiene-que-decir-sobre-la-tecnologia-y-la-ia-de-musk",
+              "thumbnail": "https://www.aciprensa.com/imagespp/neuralink-shutterstock-080925-1757351858.jpg?w=900&h=500",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iI0NnNVJhREk0WmpreVUwVm1iM3BEVFJDZEF4am5CU2dLTWdB",
+              "date": "09/08/2025, 05:25 PM, +0000 UTC"
+            },
+            {
+              "position": 31,
+              "title": "Anthropic deberá pagar 1,500 millones de dólares a estos escritores por entrenar la IA con sus obras",
+              "source": {
+                "name": "WIRED",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://es.wired.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Kate Knibbs"
+                ]
+              },
+              "link": "https://es.wired.com/articulos/anthropic-debera-pagar-1500-millones-de-dolares-a-estos-escritores-por-entrenar-la-ia-con-sus-obras",
+              "thumbnail": "https://media.es.wired.com/photos/68bf0b95a948ab481a2beb64/master/w_2560%2Cc_limit/Anthropic-AI-Lawsuit-Business-2216956955.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNWlWbTFsVlhOYVYwMWhhMFk1VFJDcUJCaXFCQ2dLTWdhQms0NXZOUVk",
+              "date": "09/08/2025, 05:55 PM, +0000 UTC"
+            },
+            {
+              "position": 32,
+              "title": "Samsung presenta Vision AI Companion en IFA 2025, inaugurando una nueva era de pantallas potenciadas por IA",
+              "source": {
+                "name": "Samsung Global Newsroom",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://news.samsung.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://news.samsung.com/pe/samsung-presenta-vision-ai-companion-en-ifa-2025-inaugurando-una-nueva-era-de-pantallas-potenciadas-por-ia",
+              "thumbnail": "https://img.global.news.samsung.com/pe/wp-content/uploads/2025/09/Samsung-TVs-and-Displays-IFA-2025-Vision-AI-Companion-Bixby-Generative-AI_dl1-1024x563.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNUlNWEppVWt0bmJrTXRlRzB4VFJDYUF4anJCU2dLTWdhQmNaS0V0Z1k",
+              "date": "09/08/2025, 05:13 PM, +0000 UTC"
+            },
+            {
+              "position": 33,
+              "title": "Guía estratégica de implementación de IA para empresas: hoja de ruta completa",
+              "source": {
+                "name": "hp.com",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.hp.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.hp.com/co-es/shop/tech-takes/implementacion-ia-empresas-ruta-estrategica",
+              "date": "09/04/2025, 09:00 PM, +0000 UTC"
+            },
+            {
+              "position": 34,
+              "title": "La IA se come los empleos: Salesforce eliminó 4.000 puestos de trabajo y se los dio a la tecnología",
+              "source": {
+                "name": "FayerWayer",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.fayerwayer.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.fayerwayer.com/internet/2025/09/08/la-ia-se-come-los-empleos-salesforce-elimino-4000-puestos-de-trabajo-y-se-los-dio-a-la-tecnologia/",
+              "thumbnail": "https://www.fayerwayer.com/resizer/v2/KFXN3ZNHXRATTBFLYNE6OSS5JI.png?auth=557c45a0bad969a140e660adeeb4c8017576b0c9120289e07c62f53b7e14ccb5&width=1200&height=900&smart=true",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNDFMWGR2UW5KbmFGZE5OSFZDVFJEZ0F4aUFCU2dLTWdZdGNZaU9RUVE",
+              "date": "09/08/2025, 08:00 PM, +0000 UTC"
+            },
+            {
+              "position": 35,
+              "title": "Google hará que las búsquedas por IA sean el modo predeterminado de búsqueda “pronto”",
+              "source": {
+                "name": "Softonic",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.softonic.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.softonic.com/articulos/google-hara-que-las-busquedas-por-ia-sean-el-modo-predeterminado-de-busqueda-pronto",
+              "thumbnail": "https://articles-img.sftcdn.net/t_article_cover_xl/auto-mapping-folder/sites/2/2025/09/google-AI.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iMkNnNHdTRzVNWlhsNk4yTkVkRWQzVFJDZkF4ampCU2dLTWdzSnNZNW11bVpFVXRsZ1pB",
+              "date": "09/08/2025, 03:45 PM, +0000 UTC"
+            },
+            {
+              "position": 36,
+              "title": "¿Hasta dónde llegará Colombia en el Mundial? La predicción de la inteligencia artificial",
+              "source": {
+                "name": "AS Colombia",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://colombia.as.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Sergio Casallas"
+                ]
+              },
+              "link": "https://colombia.as.com/futbol/hasta-donde-llegara-colombia-en-el-mundial-la-prediccion-de-la-inteligencia-artificial-n/",
+              "thumbnail": "https://img.asmedia.epimg.net/resizer/v2/FXVLQUGK65ILBPKVVZM3KPU3TQ.jpg?auth=06c7e13beca570d8cd61331a079cfd38a5d9895cf163dfd60c2dc4382fc0fd84&width=1472&height=828&focal=1400%2C525",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNUpNVTlRYUhRMGQxUTFVVGhqVFJDZkF4ampCU2dLTWdtRlVKRERJbWd0U2dJ",
+              "date": "09/08/2025, 12:11 PM, +0000 UTC"
+            },
+            {
+              "position": 37,
+              "title": "La aterradora realidad sobre las IA de compañía ahora ha sido confirmada por la ciencia: \"No existe evidencia de que ayude a la gente a sentirse menos sola o aislada\"",
+              "source": {
+                "name": "Andro4all",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://andro4all.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://andro4all.com/tecnologia/la-aterradora-realidad-sobre-las-ia-de-compania-ahora-ha-sido-confirmada-por-la-ciencia-no-existe-evidencia-de-que-ayude-a-la-gente-a-sentirse-menos-sola-o-aislada",
+              "thumbnail": "https://andro4all.com/hero/2025/09/analyticsinsight_import_wp-content_uploads_2022_04_when-humans-fall-in-love-with-robots-technology-gets-complicated-1.jpg?width=768&aspect_ratio=16:9&format=nowebp",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNU5NbVkxWVc5VGRVczVNV3RtVFJDZkF4ampCU2dLTWdhaE00YXJIUWs",
+              "date": "09/08/2025, 04:01 PM, +0000 UTC"
+            },
+            {
+              "position": 38,
+              "title": "Google Fotos recibe un nuevo editor de fotos basado en IA: así funciona",
+              "source": {
+                "name": "Andro4all",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://andro4all.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://andro4all.com/google/google-fotos-recibe-un-nuevo-editor-de-fotos-basado-en-ia-asi-funciona",
+              "thumbnail": "https://andro4all.com/hero/2024/12/google-fotos-simplificara-poner-una-imagen-de-fondo-de-pantalla.jpg?width=768&aspect_ratio=16:9&format=nowebp",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNXBjV3hsV25SaFpqWnJVSEJGVFJDZkF4ampCU2dLTWdrQlFJck1LU2JRYUFJ",
+              "date": "09/08/2025, 03:15 PM, +0000 UTC"
+            },
+            {
+              "position": 39,
+              "title": "Plaza Imperial convierte a Bogotá en la capital de la robótica y la IA en Colombia",
+              "source": {
+                "name": "AmericaMalls & Retail",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://america-retail.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://america-retail.com/malls/colombia-malls/plaza-imperial-convierte-a-bogota-en-la-capital-de-la-robotica-y-la-ia-en-colombia/",
+              "thumbnail": "https://america-retail.com/wp-content/uploads/2025/09/N7-805.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNU9MV1F3YjJKeldXNHpRbTFNVFJEQkF4aXJCU2dLTWdZUlFaTFFKQWc",
+              "date": "09/08/2025, 04:18 PM, +0000 UTC"
+            },
+            {
+              "position": 40,
+              "title": "[IA, luego existo] E3. Aula 404: profesor no encontrado",
+              "source": {
+                "name": "Cerosetenta",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://cerosetenta.uniandes.edu.co&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://cerosetenta.uniandes.edu.co/ia-luego-existo-e3-aula-404-profesor-no-encontrado/",
+              "thumbnail": "https://cerosetenta.uniandes.edu.co/wp-content/uploads/2025/09/inteligencia-artificial-luego.png",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNXNkVXRVVlZSTVFsbzNPVko2VFJDZkF4ampCU2dLTWdtQkVJcXpsQ3JCamdF",
+              "date": "09/07/2025, 10:34 AM, +0000 UTC"
+            },
+            {
+              "position": 41,
+              "title": "Conoce los Agentes de IA, la base de las nuevas empresas que está dejando sepultada a las de hace décadas",
+              "source": {
+                "name": "Infobae",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.infobae.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.infobae.com/tecno/2025/09/08/conoce-los-agentes-de-ia-la-base-de-las-nuevas-empresas-que-esta-dejando-sepultada-a-las-de-hace-decadas/",
+              "thumbnail": "https://www.infobae.com/resizer/v2/ZGG23GXMUBF7XD7EQAEFLRHYIE.png?auth=656993c1c97c9335cdc943fe097575c57f7212afb702c4059ea79ba01b317fe4&smart=true&width=1200&height=675&quality=85",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNVpjbVkwY1VobVZrUlNUR2d5VFJDZkF4ampCU2dLTWdrQklJYW1NS1UwRmdF",
+              "date": "09/08/2025, 01:45 AM, +0000 UTC"
+            },
+            {
+              "position": 42,
+              "title": "OpenAI reorganiza su equipo de Comportamiento de Modelos y crea OAI Labs para desarrollar interfaces entre personas e IA",
+              "source": {
+                "name": "Infobae",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.infobae.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.infobae.com/america/agencias/2025/09/08/openai-reorganiza-su-equipo-de-comportamiento-de-modelos-y-crea-oai-labs-para-desarrollar-interfaces-entre-personas-e-ia/",
+              "thumbnail": "https://www.infobae.com/pf/resources/images/fallback-logo-infobae-naranja-1200x900.png?d=3463",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXBVbWxxV25SbE5HaE5lRFJEVFJEZ0F4aUFCU2dLTWdZSmtwUXl2UWM",
+              "date": "09/08/2025, 10:02 AM, +0000 UTC"
+            },
+            {
+              "position": 43,
+              "title": "El maestro, pieza clave en la era de la IA: Paul LeBlanc",
+              "source": {
+                "name": "Universidad Autónoma de Guadalajara | UAG",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.uag.mx&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.uag.mx/es/mediahub/el-maestro-pieza-clave-en-la-era-de-la-ia-paul-leblanc/2025-09",
+              "thumbnail": "https://www.uag.mx/contenido/fcfqteIEAZ/mtro-juan-carlos-leao_-dr-paul-leblanc_-dr-arturo-cherbowsky-y-dr-alfonso-petersen_Qa3.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNUlUV3hCTldoeGNtZ3dWRUYzVFJERUF4aW1CU2dLTWdZSkFwb0ZFUXM",
+              "date": "09/08/2025, 04:51 PM, +0000 UTC"
+            },
+            {
+              "position": 44,
+              "title": "Cómo la IA ayuda a las empresas a recuperar horas perdidas",
+              "source": {
+                "name": "Forbes España",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://forbes.es&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Kolawole Samuel Adebayo"
+                ]
+              },
+              "link": "https://forbes.es/tecnologia/793796/como-la-ia-ayuda-a-las-empresas-a-recuperar-horas-perdidas/",
+              "thumbnail": "https://forbes.es/wp-content/uploads/2025/09/un-robot-sujeta-un-embudo-que-traga-relojes.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNU9kMjFwU2xWc1ZHb3lOVk5GVFJDZkF4ampCU2dLTWdtaEZZQUx1cU43UndJ",
+              "date": "09/08/2025, 01:43 PM, +0000 UTC"
+            },
+            {
+              "position": 45,
+              "title": "Webinar: Cómo la IA y el análisis de datos masivos están revolucionando todo",
+              "source": {
+                "name": "verdict.co.uk",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.verdict.co.uk&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.verdict.co.uk/webinar-como-la-ia-y-el-analisis-de-datos-masivos-estan-revolucionando-todo/",
+              "thumbnail": "https://www.verdict.co.uk/wp-content/uploads/2025/09/shutterstock_2545911227.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNWxPRWhpVVMxRFgySkdNSFJaVFJDdEF4akxCU2dLTWdZWkFvUUxqUXM",
+              "date": "09/08/2025, 01:11 PM, +0000 UTC"
+            },
+            {
+              "position": 46,
+              "title": "Convocatoria sobre IA para la igualdad de género e inclusión",
+              "source": {
+                "name": "CAF -banco de desarrollo de América Latina",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.caf.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.caf.com/es/trabaja-con-nosotros/convocatorias/convocatoria-de-propuestas-de-investigacion-sobre-inteligencia-artificial-y-digitalizacion-para-la-igualdad-de-genero-y-la-inclusion/",
+              "thumbnail": "https://www.caf.com/media/4678047/banners-9a-convocatoria_facebook-y-lkd_esp.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNTROMnhqVW1STGJ6RkxMV010VFJDakFSaTJBaWdCTWdZTk1ZTFVvQWs",
+              "date": "09/04/2025, 07:00 AM, +0000 UTC"
+            },
+            {
+              "position": 47,
+              "title": "Cómo la IA está redefiniendo la fidelización de los clientes",
+              "source": {
+                "name": "es-us.noticias.yahoo.com",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://es-us.noticias.yahoo.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://es-us.noticias.yahoo.com/ia-redefiniendo-fidelizaci%C3%B3n-clientes-163000657.html",
+              "thumbnail": "https://s.yimg.com/ny/api/res/1.2/0UrusD4kKiUJG6p3lZuTpg--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyNDI7aD02NjI7Y2Y9d2VicA--/https://media.zenfs.com/es/fast_company_mexico_606/e4c3054591fbaba579a11208d4cdc0f5",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNVlTSFJ3WWtGdE1qUmZVR1ZWVFJDVUF4ajJCU2dLTWdhWlE0NXJJUWc",
+              "date": "09/08/2025, 04:30 PM, +0000 UTC"
+            },
+            {
+              "position": 48,
+              "title": "Estudia en el MIT desde casa y gratis gracias a estos cursos sobre IA, tecnología y más",
+              "source": {
+                "name": "Infobae",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.infobae.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.infobae.com/tecno/2025/09/08/estudia-en-el-mit-desde-casa-y-gratis-gracias-a-estos-cursos-sobre-ia-tecnologia-y-mas/",
+              "thumbnail": "https://www.infobae.com/resizer/v2/M4IQ3RTLWFEQNBDF3LOLCI44YE.jpg?auth=308d83439b15831960ab87ad6fd3108514f3c6dc9ac6afccc01132f588af99f7&smart=true&width=1200&height=675&quality=85",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXFZWGRQTUZkTFQxVllSM2huVFJDZkF4ampCU2dLTWdZUlFwS0lzZ2M",
+              "date": "09/08/2025, 03:35 PM, +0000 UTC"
+            },
+            {
+              "position": 49,
+              "title": "OpenAI comenzará a producir en masa su chip de IA personalizado en 2026",
+              "source": {
+                "name": "Data Center Dynamics",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.datacenterdynamics.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.datacenterdynamics.com/es/noticias/openai-comenzara-a-producir-su-chip-de-ia-personalizado-es-2026/",
+              "thumbnail": "https://media.datacenterdynamics.com/media/images/OpenAI.width-358.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNVJibWRGVFdOVVNtSnFYM1IyVFJEYUFSam1BaWdLTWdZVmxKYUpOUWM",
+              "date": "09/08/2025, 09:58 AM, +0000 UTC"
+            },
+            {
+              "position": 50,
+              "title": "¿Por qué la industria de gestión de activos debe aplicar la IA en su negocio para sobrevivir?",
+              "source": {
+                "name": "Funds Society",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.fundssociety.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.fundssociety.com/es/noticias/negocio/por-que-la-industria-de-gestion-de-activos-debe-aplicar-la-ia-en-su-negocio-para-sobrevivir/",
+              "thumbnail": "https://www.fundssociety.com/wp-content/uploads/2025/09/ia-y-asset-management.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iI0NnNDVPVUZKZERObGVuVm1ZM2RKVFJERUF4aW1CU2dLTWdB",
+              "date": "09/08/2025, 09:00 AM, +0000 UTC"
+            },
+            {
+              "position": 51,
+              "title": "IA: la herramienta de inteligencia artificial que YouTube usa para editar tus videos sin que lo sepas y sin pedirte permiso",
+              "source": {
+                "name": "BBC",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.bbc.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Thomas Germain"
+                ]
+              },
+              "link": "https://www.bbc.com/mundo/articles/c9wy2xkrje5o",
+              "thumbnail": "https://ichef.bbci.co.uk/news/1024/branded_mundo/090a/live/f1c14810-8153-11f0-ab3e-bd52082cd0ae.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNTJaVzU1Um5sMFRGbE5XVVpqVFJDZkF4ampCU2dLTWdhcGdveXVzUVk",
+              "date": "08/27/2025, 07:00 AM, +0000 UTC"
+            },
+            {
+              "position": 52,
+              "title": "IAS 2025: El potencial de la IA en los esfuerzos de atención y prevención del VIH",
+              "source": {
+                "name": "gtt-vih.org",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.gtt-vih.org&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.gtt-vih.org/publicaciones/la-noticia-del-dia/04-09-25/",
+              "thumbnail": "https://www.gtt-vih.org/wp-content/uploads/2025/09/Chatbot.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNU9iREEwWldoNWRGUmxPV1ZhVFJERUF4aW1CU2dLTWdraFVvenhLQ2Q3U2dJ",
+              "date": "09/04/2025, 11:44 AM, +0000 UTC"
+            },
+            {
+              "position": 53,
+              "title": "Pericia informática: IA generativa, aprendizaje profundo y teoría del caos",
+              "source": {
+                "name": "PwC",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.pwc.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.pwc.com/co/es/pwc-insights/pericia-informatica-ia-generativa-aprendizaje-profundo-y-teoria-del-caos.html",
+              "thumbnail": "https://www.pwc.com/co/es/prensa/imagenes-insights/2025/septiembre/banner-art-pericia-informatica.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNWhZVkpUYUZwWGNIRk5ZMGhVVFJDZkF4ampCU2dLTWdheE00aVBuUWs",
+              "date": "09/05/2025, 01:41 PM, +0000 UTC"
+            },
+            {
+              "position": 54,
+              "title": "Así funciona Androidify, la app de Google que convierte tu selfie en un avatar Android con IA",
+              "source": {
+                "name": "ENTER.CO",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.enter.co&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Digna Irene Urrea Cruz"
+                ]
+              },
+              "link": "https://www.enter.co/chips-bits/apps-software/asi-funciona-androidify-la-app-de-google-que-convierte-tu-selfie-en-un-avatar-android-con-ia/",
+              "thumbnail": "https://www.enter.co/wp-content/uploads/2025/09/Gris-Negro-Claro-Fotografia-Experimental-Portafolio-Sitio-Web-67.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNVVNMFJsYmtGT1ZHNVBRVkJZVFJDZkF4ampCU2dLTWdZQllJcWxPQVU",
+              "date": "09/08/2025, 07:32 PM, +0000 UTC"
+            },
+            {
+              "position": 55,
+              "title": "Apple se rinde: la compañía prepara su propio buscador con IA para Siri y podría usar la tecnología de Google y OpenAI",
+              "source": {
+                "name": "Andro4all",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://andro4all.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://andro4all.com/apple/apple-se-rinde-la-compania-prepara-su-propio-buscador-con-ia-para-siri-y-podria-usar-la-tecnologia-de-google-y-openai",
+              "thumbnail": "https://andro4all.com/hero/2025/03/siri-apple-intelligence.jpg?width=768&aspect_ratio=16:9&format=nowebp",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXZNakUyZEUxbWJDMUNlbTVKVFJDZkF4ampCU2dLTWdZcGhaRE5zUVk",
+              "date": "09/08/2025, 11:15 AM, +0000 UTC"
+            },
+            {
+              "position": 56,
+              "title": "El mundo está esperando el nuevo gran modelo de DeepSeek para competir con GPT-5, pero DeepSeek tiene...",
+              "source": {
+                "name": "Xataka",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.xataka.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Amparo Babiloni"
+                ]
+              },
+              "link": "https://www.xataka.com/robotica-e-ia/mundo-esta-esperando-nuevo-gran-modelo-deepseek-para-competir-gpt-5-deepseek-tiene-otros-planes-ia-agentica",
+              "thumbnail": "https://i.blogs.es/4c7cda/pexels-bertellifotografia-30530404/1366_2000.jpeg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iI0NnNWhia3gxWld3MGJWVjNTMGxNVFJERUF4aW1CU2dLTWdB",
+              "date": "09/08/2025, 03:01 PM, +0000 UTC"
+            },
+            {
+              "position": 57,
+              "title": "Nvidia recibe recorte de precio ante rivalidad en chips de IA",
+              "source": {
+                "name": "Bitfinanzas",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://bitfinanzas.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://bitfinanzas.com/nvidia-recibe-recorte-de-precio-ante-rivalidad-en-chips-de-ia/",
+              "thumbnail": "https://media-bitfinanzas-com.s3.amazonaws.com/wp-content/uploads/2025/09/nvidia_competencia_ia.jpeg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNVhaVVZaV21SMVVYaFRUbVZPVFJERUF4aW1CU2dLTWdZZGM1THFMUWM",
+              "date": "09/08/2025, 04:45 PM, +0000 UTC"
+            },
+            {
+              "position": 58,
+              "title": "Los peligros de usar la IA como psicólogo",
+              "source": {
+                "name": "RTVE.es",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.rtve.es&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.rtve.es/play/audios/a-golpe-de-bit/a-golpe-bit-peligros-usar-ia-como-psicologo/16720613/",
+              "thumbnail": "https://img2.rtve.es/p/121130/imgbackground/?h=320",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNU1XV05VYlRocFZubFdieTB3VFJEQUFoakFBaWdLTWdhUllZNU1LUWM",
+              "date": "09/08/2025, 07:57 PM, +0000 UTC"
+            },
+            {
+              "position": 59,
+              "title": "Así serán las impresionantes gafas de combate con IA que fabricará Meta para Estados Unidos",
+              "source": {
+                "name": "Hipertextual",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://hipertextual.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://hipertextual.com/tecnologia/meta-gafas-combate-ia-ejercito-eeuu/",
+              "thumbnail": "https://i0.wp.com/imgs.hipertextual.com/wp-content/uploads/2025/09/gafas-meta-ia-ee-uu.jpg?fit=1200%2C675&quality=70&strip=all&ssl=1",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNWpWVU41Y2xoV2FUSnJPWFIzVFJDZkF4ampCU2dLTWdhcFZZVE9KUWc",
+              "date": "09/08/2025, 07:36 PM, +0000 UTC"
+            },
+            {
+              "position": 60,
+              "title": "No es IA: la próxima GRAN APUESTA de Bill Gates para revolucionar la SALUD, los ALIMENTOS y la EDUCACIÓN en el",
+              "source": {
+                "name": "El Cronista",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.cronista.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.cronista.com/mexico/actualidad-mx/no-es-ia-la-proxima-gran-apuesta-de-bill-gates-para-revolucionar-la-salud-los-alimentos-y-la-educacion-en-el-mundo/",
+              "thumbnail": "https://www.cronista.com/files/image/1202/1202975/686fbf407d2f0.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNVBORkJNUjNSdk0wZGlSWGxJVFJEREF4aW9CU2dLTWdhcFZaRE5wUWc",
+              "date": "09/08/2025, 04:28 PM, +0000 UTC"
+            },
+            {
+              "position": 61,
+              "title": "Anthropic pagará US$1.500 millones por uso de libros pirateados en entrenamiento de IA",
+              "source": {
+                "name": "bloomberglinea.com",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.bloomberglinea.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Shirin Ghaffary",
+                  "Annelise Levy",
+                  "Aruni Soni"
+                ]
+              },
+              "link": "https://www.bloomberglinea.com/negocios/anthropic-pagara-us1500-millones-por-uso-de-libros-pirateados-en-entrenamiento-de-ia/",
+              "thumbnail": "https://www.bloomberglinea.com/resizer/v2/QTVK6WVYUZF45JDSLVMGCKBBTE.jpeg?auth=40f082e886cc17338b3100424eb6457fa887cd4a5db2368c3834417a54d5b251&width=800&height=533&quality=80&smart=true",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNDFSalZmY1VKcllVZHphVnBLVFJERUF4aW5CU2dLTWdZQlFJN3NLUVk",
+              "date": "09/08/2025, 07:28 AM, +0000 UTC"
+            },
+            {
+              "position": 62,
+              "title": "Novias creadas con IA: ¿cómo es la polémica app que es furor en Japón?",
+              "source": {
+                "name": "Revista OHLALÁ!",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.somosohlala.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.somosohlala.com/actualidad/novias-creadas-con-ia-como-es-la-polemica-app-que-es-furor-en-japon-nid08092025",
+              "thumbnail": "https://www.somosohlala.com/s3fs-public/styles/img_internal/public/2025-09/capturaia.jpg.webp",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNDFZekZDVEdrM1NVaGxhVmQzVFJEbUFoaUVCQ2dLTWdhNU01aFJuUWc",
+              "date": "09/08/2025, 07:20 PM, +0000 UTC"
+            },
+            {
+              "position": 63,
+              "title": "LG presenta “LG AI Home” en IFA 2025: el hogar inteligente impulsado por inteligencia artificial",
+              "source": {
+                "name": "ITSitio",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.itsitio.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.itsitio.com/dispositivos/lg-presenta-lg-ai-home-en-ifa-2025-el-hogar-inteligente-impulsado-por-inteligencia-artificial/",
+              "thumbnail": "https://www.itsitio.com/wp-content/uploads/2025/09/LG-780x470.webp",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNURkSGRhZEVkeFQzUnVNMDl0VFJDdUF4aktCU2dLTWdZQkFJNkFHQWM",
+              "date": "09/08/2025, 12:43 PM, +0000 UTC"
+            },
+            {
+              "position": 64,
+              "title": "Navegando oportunidades: una dosis saludable de realismo sobre la IA",
+              "source": {
+                "name": "La Nación",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.lanacion.com.ar&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Martín Migoya"
+                ]
+              },
+              "link": "https://www.lanacion.com.ar/economia/IA/navegando-oportunidades-una-dosis-saludable-de-realismo-sobre-la-ia-nid08092025/",
+              "thumbnail": "https://www.lanacion.com.ar/resizer/v2/el-ceo-de-un-unicornio-argentino-revela-claves-HMQNRHTJ3NE6XHKDNHYJ3PENLA.jpg?auth=5d897c54c7417363047e8ef1324276c76912029e79641011ee4522e73c6db54d&width=420&height=280&quality=70&smart=true",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iMkNnNU5Oams1WTBveWVFd3piamxHVFJDWUFoaWtBeWdLTWdzWkFJN0xBV1VXZ3lrUFZB",
+              "date": "09/08/2025, 06:05 PM, +0000 UTC"
+            },
+            {
+              "position": 65,
+              "title": "Los SML y la burbuja de IA",
+              "source": {
+                "name": "DPL News",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://dplnews.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Paul Lara"
+                ]
+              },
+              "link": "https://dplnews.com/los-sml-y-la-burbuja-de-ia/",
+              "thumbnail": "https://dplnews.com/wp-content/uploads/2024/04/dplnews_ia-inteligencia-artificial_mc25424.jpeg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNU9WSEJ0TTFaZmVubElYMFpoVFJDZkF4ampCU2dLTWdhbGc1RE1zUVk",
+              "date": "09/08/2025, 04:45 PM, +0000 UTC"
+            },
+            {
+              "position": 66,
+              "title": "La Inteligencia Artificial predijo en que año se retirarían Lionel Messi y Cristiano Ronaldo del futbol",
+              "source": {
+                "name": "Bolavip",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://bolavip.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Ramiro Diaz Canessa"
+                ]
+              },
+              "link": "https://bolavip.com/mx/futbol-internacional/la-inteligencia-artificial-predijo-en-que-ano-se-retirarian-lionel-messi-y-cristiano-ronaldo-del-futbol",
+              "thumbnail": "https://ds-images.bolavip.com/news/image/1200/740/?src=https://images.bolavip.com/webp/mx/full/BMX_20250908_BMX_355689_BeFunky-collage-36.webp",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNDJTM05aVVhSaE1qWXlaazFQVFJDekF4akJCU2dLTWdtSklwcjBFR3ZCYUFJ",
+              "date": "09/08/2025, 07:06 PM, +0000 UTC"
+            },
+            {
+              "position": 67,
+              "title": "Un nuevo servicio basado en la IA ofrece asesoría gratuita en derecho laboral en 32 idiomas",
+              "source": {
+                "name": "Korea.net",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://spanish.korea.net&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://spanish.korea.net/NewsFocus/Policies/view?articleId=278526",
+              "thumbnail": "https://spanish.korea.net/upload/content/editImage/20250908105140103_SSPNXX01.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNUJSREkxTmtwcFlsVm9XbmxYVFJDd0FSaWVBaWdCTWdZSmNJcGxxZ2c",
+              "date": "09/08/2025, 06:45 AM, +0000 UTC"
+            },
+            {
+              "position": 68,
+              "title": "Aún no sabemos si la IA está destruyendo empleo. Sí sabemos cuál está creando: el de gente que se dedica a arreglar sus destrozos",
+              "source": {
+                "name": "Genbeta",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.genbeta.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.genbeta.com/laboral/no-sabemos-ia-esta-destruyendo-empleo-sabemos-cual-esta-creando-gente-que-se-dedica-a-arreglar-sus-destrozos",
+              "thumbnail": "https://i.blogs.es/2c3aa5/captura-de-pantalla-2025-09-08-a-las-19.32.18/500_333.webp",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNUxVVTlNU1dRNVQydE5WSE54VFJETkFoajBBeWdLTWdZaHdJb0xRZ1U",
+              "date": "09/08/2025, 05:36 PM, +0000 UTC"
+            },
+            {
+              "position": 69,
+              "title": "China sabe que su población se va a hundir pero ya tiene un plan a largo plazo para resolverlo. Cómo no,...",
+              "source": {
+                "name": "Xataka",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.xataka.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.xataka.com/robotica-e-ia/china-sabe-que-su-poblacion-se-va-a-hundir-tiene-plan-a-largo-plazo-para-resolverlo-como-no-gracias-a-ia",
+              "thumbnail": "https://i.blogs.es/d0b022/china-ai/1366_2000.jpeg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNWtjQzFUUmpObVZqSTRTa3B1VFJERUF4aW1CU2dLTWdZTldaaW1KZ2s",
+              "date": "09/08/2025, 07:31 PM, +0000 UTC"
+            },
+            {
+              "position": 70,
+              "title": "Visa apuesta fuerte por el comercio por IA",
+              "source": {
+                "name": "RedUSERS",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.redusers.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.redusers.com/noticias/visa-apuesta-fuerte-comercio-ia/",
+              "thumbnail": "https://www.redusers.com/noticias/wp-content/uploads/2025/09/visa-IA.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNDNWRTVOYlVsMVoxbFBPVXcxVFJDN0FSaU9BaWdCTWdZVkFvelZFQXM",
+              "date": "09/08/2025, 03:12 PM, +0000 UTC"
+            },
+            {
+              "position": 71,
+              "title": "UNIMAGDALENA puso a la Inteligencia artificial (IA) como temática central en la 10.ª Conferencia CINSIS",
+              "source": {
+                "name": "Universidad del Magdalena",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.unimagdalena.edu.co&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.unimagdalena.edu.co/presentacionPublicacion/VerNoticia/422962",
+              "thumbnail": "https://www.unimagdalena.edu.co/Content/ArchivosPublicaciones/Publicacion_422962/documento_2_20250902150920.288.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNHhaVmhCT0ZKT04xSXliRUZDVFJERUF4aW5CU2dLTWdrQlVJYUFLR1l0VkFF",
+              "date": "09/02/2025, 08:15 PM, +0000 UTC"
+            },
+            {
+              "position": 72,
+              "title": "\"Estuve entrenando a un chatbot que me quitó el puesto\": fue despedida tras 25 años trabajando y al final la IA fue un desastre",
+              "source": {
+                "name": "Genbeta",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.genbeta.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "José Alberto Lizana Jaramillo"
+                ]
+              },
+              "link": "https://www.genbeta.com/inteligencia-artificial/estuve-entrenando-a-chatbot-que-me-quito-puesto-fue-despedida-25-anos-trabajando-al-final-ia-fue-desastre",
+              "thumbnail": "https://i.blogs.es/570854/trabajadore/500_333.webp",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNTFTVlJ3YVdsNE9FVjVVblpXVFJETkFoajBBeWdLTWdhUmc0b3BQZ1U",
+              "date": "09/08/2025, 10:01 AM, +0000 UTC"
+            },
+            {
+              "position": 73,
+              "title": "“Critterz”, el filme hecho con IA con el que OpenAI desafía a Hollywood",
+              "source": {
+                "name": "El Comercio Perú",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://elcomercio.pe&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://elcomercio.pe/tecnologia/inteligencia-artificial/critterz-el-filme-hecho-con-ia-con-el-que-openai-desafia-a-hollywood-noticia/",
+              "thumbnail": "https://elcomercio.pe/resizer/v2/TZH2N4NEQZEUZDELLOMH6CKT74.jpg?auth=c53a6f268178d730dbd0ce76902f9c80639d63fa1ff5b110800ebf84e26930cd&width=1422&height=800&quality=75&smart=true",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNXRNMXBqTUZsWUxUVlhMVzFPVFJDZkF4amlCU2dLTWdrRlVJSUUwNk56S3dJ",
+              "date": "09/08/2025, 04:58 PM, +0000 UTC"
+            },
+            {
+              "position": 74,
+              "title": "Prometheo: El CRM con IA que transforma las ventas de PYMEs",
+              "source": {
+                "name": "thestandardcio.com",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://thestandardcio.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://thestandardcio.com/2025/09/08/prometheo-el-crm-con-ia-que-transforma-las-ventas-de-pymes/",
+              "thumbnail": "https://thestandardcio.com/wp-content/uploads/sites/2/2025/09/unnamed39.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXBNV0ZmZEdSTWFucFNNSEZJVFJDZkF4ampCU2dLTWdZVlJKSndIUWs",
+              "date": "09/08/2025, 03:56 PM, +0000 UTC"
+            },
+            {
+              "position": 75,
+              "title": "Seguridad de datos de IA: protección para empresas colombianas",
+              "source": {
+                "name": "hp.com",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.hp.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.hp.com/co-es/shop/tech-takes/seguridad-datos-ia-proteccion-sistemas",
+              "thumbnail": "https://co-media.hptiendaenlinea.com/magefan_blog/7h464zmi.png",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXhPRm80TTBSSk1sVkxUekJxVFJDSEF4aVBCaWdLTWdZbEpJUnduUWs",
+              "date": "09/03/2025, 05:20 AM, +0000 UTC"
+            },
+            {
+              "position": 76,
+              "title": "La IA que diseña nuevos antibióticos desde cero",
+              "source": {
+                "name": "Infosalus",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.infosalus.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.infosalus.com/salud-investigacion/noticia-ia-disena-nuevos-antibioticos-cero-20250908073948.html",
+              "thumbnail": "https://img.europapress.es/fotoweb/fotonoticia_20250908073948_690.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iMkNnNVpkMHh2V0RSNVdGWk9iRk5GVFJERUF4aW1CU2dLTWd1QkFZam1MZVV0UUx2Z3NR",
+              "date": "09/08/2025, 05:42 AM, +0000 UTC"
+            },
+            {
+              "position": 77,
+              "title": "BitMart lista OpenLedger ($OPEN): un puente entre IA y blockchain",
+              "source": {
+                "name": "Coinfomania",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://coinfomania.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://coinfomania.com/es/bitmart-lista-openledger-open-un-puente-entre-ia-y-blockchain/",
+              "thumbnail": "https://coinfomania.com/_next/image/?url=https%3A%2F%2Fcoinfomania.com%2Fwp-content%2Fuploads%2FBitMart-Lists-OpenLedger-OPEN-Bridging-AI-and-Blockchain.webp&w=3840&q=75",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNWlibUk1YWtvMFRsbDNaSFk0VFJDZkF4ampCU2dLTWdtQlVaRDBxS2F4TEFJ",
+              "date": "09/08/2025, 08:18 AM, +0000 UTC"
+            },
+            {
+              "position": 78,
+              "title": "¿Millonarios clasifica a los cuadrangulares? La IA dio contundente veredicto y proyectó resultados",
+              "source": {
+                "name": "Caracol Radio",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://caracol.com.co&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://caracol.com.co/2025/09/07/millonarios-clasifica-a-los-cuadrangulares-la-ia-dio-contundente-veredicto-y-proyecto-resultados/",
+              "thumbnail": "https://caracol.com.co/resizer/v2/https%3A%2F%2Fcloudfront-us-east-1.images.arcpublishing.com%2Fprisaradioco%2FWULES2PIIZGBZNIPRH5S52VGKY.jpg?auth=8b1c92fd39e47ab73afc8526d04b368cd2ea15b847e78915149c4ccad0b37ce6&height=499&width=763&quality=70&smart=true",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNVNUM1EzZG1oa01WaFFhREV5VFJEQUF4aXRCU2dLTWdZZE5wWXFHZ28",
+              "date": "09/07/2025, 01:20 PM, +0000 UTC"
+            },
+            {
+              "position": 79,
+              "title": "Guerra de IA: ventajas y riesgos de los modelos generativos que dominan el mercado",
+              "source": {
+                "name": "Infobae",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://www.infobae.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.infobae.com/def/2025/09/06/guerra-de-ia-ventajas-y-riesgos-de-los-modelos-generativos-que-dominan-el-mercado/",
+              "thumbnail": "https://www.infobae.com/resizer/v2/HUT4QB7LAZGVJHANN3TCZRGZ6Q.jpg?auth=a88fb58fee4be7ed3a6f85f23b5a1a05cb8706dc56e745b412790899527cab26&smart=true&width=1200&height=675&quality=85",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNUJjVEl3UVZWMVMxOXVSVU5XVFJDZkF4ampCU2dLTWdZTklaYlNGQW8",
+              "date": "09/06/2025, 08:30 AM, +0000 UTC"
+            },
+            {
+              "position": 80,
+              "title": "Pedro Andrade: \"La CX 3.0 está liderada por agentes de IA autónomos\"",
+              "source": {
+                "name": "APD: Asociación para el Progreso de la Dirección",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.apd.es&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.apd.es/entrevista-pedro-andrade-talkdesk-agentes-ia/",
+              "thumbnail": "https://apd-prod-wordpress.s3.amazonaws.com/uploads/sites/2/2025/07/pedro-andrade-2024.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNTFjRTFQVG5aNUxWcFVhM05KVFJEUEFoaXFCQ2dLTWdZdFJaYk9vUWc",
+              "date": "09/08/2025, 03:33 PM, +0000 UTC"
+            },
+            {
+              "position": 81,
+              "title": "¿Subirá otro 50%? Esta acción elegida por IA ya ha subido más de un 13% hoy",
+              "source": {
+                "name": "es.finance.yahoo.com",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://es.finance.yahoo.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Thomas Monteiro"
+                ]
+              },
+              "link": "https://es.finance.yahoo.com/noticias/subir%C3%A1-50-acci%C3%B3n-elegida-ia-144800699.html",
+              "thumbnail": "https://s.yimg.com/ny/api/res/1.2/kH6_vDIFLdolJOEu5n_tXw--/YXBwaWQ9aGlnaGxhbmRlcjt3PTE3MjY7aD0xNTY2/https://media.zenfs.com/es/investing_com_es_832/17c9110ef2cca4feb0c5a1f4b9c703f8",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNU1XbHBIZFZNeFV6UkJZVzVsVFJDUEJCakZCQ2dLTWdZQklZVFNRQVE",
+              "date": "09/08/2025, 02:48 PM, +0000 UTC"
+            },
+            {
+              "position": 82,
+              "title": "Tu terapeuta de IA podría ser ilegal pronto. Aquí te explicamos por qué",
+              "source": {
+                "name": "CNN en Español",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://cnnespanol.cnn.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Kameryn Griesser"
+                ]
+              },
+              "link": "https://cnnespanol.cnn.com/2025/08/28/ciencia/terapeuta-ia-podria-ilegal-pronto-trax",
+              "thumbnail": "https://media.cnn.com/api/v1/images/stellar/prod/gettyimages-2032811185-20250820143513314.jpg?c=original",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNHhhR1JGTWxBdGVISnJaa05QVFJERUF4aW1CU2dLTWdZSlk1S0ZxZ1k",
+              "date": "08/28/2025, 07:00 AM, +0000 UTC"
+            },
+            {
+              "position": 83,
+              "title": "Seaya se incorpora al capital de Adsmurai para impulsar su expansión internacional y transformar el marketing con IA",
+              "source": {
+                "name": "Marketing Directo",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.marketingdirecto.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Alicia Hebrero"
+                ]
+              },
+              "link": "https://www.marketingdirecto.com/digital-general/digital/adsmurai-seaya-expansion-ia",
+              "thumbnail": "https://www.marketingdirecto.com/wp-content/uploads/2025/09/Trend-or-Hype-Am-I-Thinking-Straight-2025-09-08T135334.308.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXdVV1pFZFd3eE1GWmhPWFphVFJDZkF4ampCU2dLTWdhQmtKTEhPQWM",
+              "date": "09/08/2025, 12:06 PM, +0000 UTC"
+            },
+            {
+              "position": 84,
+              "title": "El ambicioso plan de la IA para reconstruir la película maldita de Orson Welles disgusta a su familia",
+              "source": {
+                "name": "20Minutos",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.20minutos.es&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.20minutos.es/cinemania/noticias/orson-welles-inteligencia-artificial-cuarto-mandamiento_6242356_0.html",
+              "thumbnail": "https://imagenes.20minutos.es/files/image_640_360/uploads/imagenes/2025/09/06/68bc0b2549e5e.jpeg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNTZNWHBGT0U5R2QzTlNkR0Y0VFJEb0FoaUFCU2dLTWdZQkVJNnVsUW8",
+              "date": "09/08/2025, 03:30 PM, +0000 UTC"
+            },
+            {
+              "position": 85,
+              "title": "FDB Films lanza VOIDLAB, IA generativa para potenciar a las agencias",
+              "source": {
+                "name": "Latinspots.com",
+                "icon": "https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.latinspots.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.latinspots.com/noticia/fdb-films-lanza-voidlab-ia-generativa-para-potenciar-a-las-agencias/93313",
+              "thumbnail": "https://static.latinspots.com/notas/Gnota_93313.jpg?timestamp=1757303669",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNTFWWFJIZERSc09IVXdaazE0VFJDb0FSaXNBaWdCTWdZSkVJWEdWZ00",
+              "date": "09/08/2025, 06:02 AM, +0000 UTC"
+            },
+            {
+              "position": 86,
+              "title": "SHEIN y la IA en publicidad: riesgos, ética y gobernanza",
+              "source": {
+                "name": "AmericaMalls & Retail",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://america-retail.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://america-retail.com/retail-lujo-moda/moda/shein-y-la-ia-en-publicidad-riesgos-etica-y-gobernanza/",
+              "thumbnail": "https://america-retail.com/wp-content/uploads/2025/09/SHEIN-y-la-IA-en-publicidad_-riesgos-etica-y-gobernanza.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNUVRelUwYWtrNGVGTmpObnBZVFJERUF4aW1CU2dLTWdrRmdKS2x0bVl0YndF",
+              "date": "09/08/2025, 05:35 AM, +0000 UTC"
+            },
+            {
+              "position": 87,
+              "title": "¿Real o IA? El nuevo anuncio de Vodafone enciende la polémica en TikTok",
+              "source": {
+                "name": "Hipertextual",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://hipertextual.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://hipertextual.com/internet/vodafone-anuncio-ia-tiktok-influencer-virtual/",
+              "thumbnail": "https://i0.wp.com/imgs.hipertextual.com/wp-content/uploads/2025/09/vodafone-tiktok.jpg?fit=1200%2C750&quality=70&strip=all&ssl=1",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXFkVVZKVlZsaFNXUTFVakp5VFJDMkF4aTlCU2dLTWdheE5KQ1BJUWM",
+              "date": "09/08/2025, 06:30 PM, +0000 UTC"
+            },
+            {
+              "position": 88,
+              "title": "Inteligencia Artificial (IA) en el Aula: Un salto ético",
+              "source": {
+                "name": "El Comercio",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.elcomercio.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Lorena Naranjo Godoy"
+                ]
+              },
+              "link": "https://www.elcomercio.com/opinion/inteligencia-artificial-ia-en-el-aula-un-salto-etico/",
+              "thumbnail": "https://media.elcomercio.com/wp-content/uploads/2025/03/Lorena-Naranjo-Godoy_nuevo-1024x683.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNUJMWEEwUW1OSGRtRTVOMUZ1VFJERUF4aW1CU2dLTWdZVlU1UXpKUWc",
+              "date": "09/08/2025, 02:31 PM, +0000 UTC"
+            },
+            {
+              "position": 89,
+              "title": "Venezuela asegura que Estados Unidos creó con IA video que muestra ataque a una embarcación en el Caribe que transportaba droga",
+              "source": {
+                "name": "ELTIEMPO.COM",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.eltiempo.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.eltiempo.com/mundo/venezuela/venezuela-estados-unidos-creo-con-ia-video-que-muestra-ataque-a-una-embarcacion-en-el-caribe-que-supuestamente-es-venezolano-3487211",
+              "thumbnail": "https://imagenes2.eltiempo.com/files/image_379_284/files/fp/uploads/2025/09/02/68b76460c08cf.r_d.363-161-0.png",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNW9RVWROU21kRFdHcFRTMFZyVFJDY0FoajdBaWdLTWdhdFE1aFBJUWc",
+              "date": "09/02/2025, 11:45 PM, +0000 UTC"
+            },
+            {
+              "position": 90,
+              "title": "OpenAI produce película con IA para exhibir en el festival de Cannes",
+              "source": {
+                "name": "RedUSERS",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.redusers.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.redusers.com/noticias/openai-produce-pelicula-ia-exhibir-festival-cannes/",
+              "thumbnail": "https://www.redusers.com/noticias/wp-content/uploads/2025/09/critterz.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNW9RV1o2TVRVNE1HeGZlQzFIVFJEQ0F4aUtCU2dLTWdhOWdwQVRMUWM",
+              "date": "09/08/2025, 01:47 PM, +0000 UTC"
+            },
+            {
+              "position": 91,
+              "title": "Alucinaciones de la IA: ¿Por qué ChatGPT y otros chatbots siguen dando respuestas inventadas?",
+              "source": {
+                "name": "El Comercio Perú",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://elcomercio.pe&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://elcomercio.pe/tecnologia/empresas/alucinaciones-de-la-ia-por-que-chatgpt-y-otros-chatbots-siguen-dando-respuestas-inventadas-noticia/",
+              "thumbnail": "https://elcomercio.pe/resizer/v2/DBPJ2ZQMRBA5LA7ZVELIQTZKBI.jpeg?auth=e7fa533cf8de8f4cc398a38e2309d6bc12be6e39357166c4e1abcbb30dc30540&width=1024&height=606&quality=75&smart=true",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iI0NnNVZVa0pZVjJvelIxZGZRbWhtVFJDcUF4alFCU2dLTWdB",
+              "date": "09/08/2025, 03:58 PM, +0000 UTC"
+            },
+            {
+              "position": 92,
+              "title": "¿Está el sistema energético de China preparado para el auge de la IA?",
+              "source": {
+                "name": "Reporte Asia",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://reporteasia.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://reporteasia.com/opinion/2025/09/08/esta-el-sistema-energetico-de-china-preparado-para-el-auge-de-la-ia/",
+              "thumbnail": "https://reporteasia.com/wp-content/uploads/2025/09/The-pipeline-at-Alibabas-data-center-in-Zhangbei-Hebei-Province_Jin-Liangkuai_Xinhua_Alamy_GW75J0-1024x683-1.webp",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNVFVRzlmTTNwRFprWk1ORzFDVFJERUF4aW1CU2dLTWdtQkFJb3VpU1dTYmdF",
+              "date": "09/08/2025, 07:55 PM, +0000 UTC"
+            },
+            {
+              "position": 93,
+              "title": "¿Por qué el servilismo de la IA puede ser un riesgo?",
+              "source": {
+                "name": "CNN en Español",
+                "icon": "https://encrypted-tbn3.gstatic.com/faviconV2?url=https://cnnespanol.cnn.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Rey Rodríguez"
+                ]
+              },
+              "link": "https://cnnespanol.cnn.com/2025/09/06/ciencia/video/inteligencia-artificial-riesgos-jovenes-mirador-mundial-tv",
+              "thumbnail": "https://media.cnn.com/api/v1/images/stellar/prod/gettyimages-2022353617-20250907010652503.jpg?c=16x9&q=w_800,c_fill",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iJ0NnNVZaRmh4TkV0NVpUZGxkamRSVFJDZkF4ampCU2dLTWdPdFpCQQ",
+              "date": "09/07/2025, 01:03 AM, +0000 UTC"
+            },
+            {
+              "position": 94,
+              "title": "Telecom Argentina ampliará sus centros de datos para soportar cargas de IA",
+              "source": {
+                "name": "Data Center Dynamics",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.datacenterdynamics.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.datacenterdynamics.com/es/noticias/telecom-argentina-ampliar%C3%A1-sus-centros-de-datos-para-soportar-cargas-de-ia/",
+              "thumbnail": "https://media.datacenterdynamics.com/media/images/telecom-argentina-CPD-exterior.2e16d0ba.fill-1200x630.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iL0NnNVdNbWhXTWxkR055MUNiV0V3VFJEVEFSaVFBeWdLTWdrRlZZSU5JbVBKclFF",
+              "date": "09/08/2025, 12:43 PM, +0000 UTC"
+            },
+            {
+              "position": 95,
+              "title": "Sam Altman habla de la “Internet muerta”. La teoría que parecía conspiración y ahora preocupa por la avalancha de bots y contenidos generados por IA",
+              "source": {
+                "name": "Gizmodo en Español",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://es.gizmodo.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Martin Nicolas Parolari"
+                ]
+              },
+              "link": "https://es.gizmodo.com/sam-altman-habla-de-la-internet-muerta-la-teoria-que-parecia-conspiracion-y-ahora-preocupa-por-la-avalancha-de-bots-y-contenidos-generados-por-ia-2000190899",
+              "thumbnail": "https://es.gizmodo.com/app/uploads/2025/09/Diseno-sin-titulo-26-8.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iI0NnNXFiVGxQUVZkTWVsSmtYMjFSVFJERUF4aW1CU2dLTWdB",
+              "date": "09/08/2025, 06:18 PM, +0000 UTC"
+            },
+            {
+              "position": 96,
+              "title": "Programa Café#IA",
+              "source": {
+                "name": "UAB Barcelona",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.uab.cat&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.uab.cat/web/sala-de-prensa/detalle-noticia/programa-cafe-ia-1345830290069.html?detid=1345963468437",
+              "thumbnail": "http://www.uab.cat/Imatge/671/13/CafeIA%2010%20sept.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iI0NnNUhYek5CWjB3NVlrZEVTamxHVFJEckJCanZBeWdLTWdB",
+              "date": "09/08/2025, 11:02 AM, +0000 UTC"
+            },
+            {
+              "position": 97,
+              "title": "Alucinaciones por IA: Los investigadores han encontrado la causa - y una solución",
+              "source": {
+                "name": "Notebookcheck.org",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.notebookcheck.org&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.notebookcheck.org/Alucinaciones-por-IA-Los-investigadores-han-encontrado-la-causa-y-una-solucion.1108768.0.html",
+              "thumbnail": "https://www.notebookcheck.org/fileadmin/Notebooks/AI/A-hyperrealistic-image-of-a-futuristic-AI-bra-1757322652.png",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNXFaRE5mUlRoa2FtdE9NR3RqVFJERUF4aW1CU2dLTWdZWlU0NXNKUWM",
+              "date": "09/08/2025, 01:03 PM, +0000 UTC"
+            },
+            {
+              "position": 98,
+              "title": "enfoque automático asistido por IA archivos",
+              "source": {
+                "name": "Technocio",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://technocio.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://technocio.com/tag/enfoque-automatico-asistido-por-ia/",
+              "thumbnail": "https://technocio.com/wp-content/uploads/2025/09/MediaTek.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNDVVbWh1T1hOSWFEUnVNbmRqVFJDYkF4anJCU2dLTWdZWlk1anNwUWc",
+              "date": "09/08/2025, 07:36 PM, +0000 UTC"
+            },
+            {
+              "position": 99,
+              "title": "WhatsApp lanza los fondos creados con IA para las videollamadas",
+              "source": {
+                "name": "TreceBits",
+                "icon": "https://encrypted-tbn0.gstatic.com/faviconV2?url=https://www.trecebits.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL",
+                "authors": [
+                  "Manuel Moreno Molina"
+                ]
+              },
+              "link": "https://www.trecebits.com/como-crear-fondo-con-ia-para-videollamadas-whatsapp/",
+              "thumbnail": "https://www.trecebits.com/wp-content/uploads/2024/09/videollamada-en-whatsapp.jpg.webp",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNVZaVVZOWjBoeFFWVnpSakJKVFJDZkF4ampCU2dLTWdZMW9ZclR1QVk",
+              "date": "09/08/2025, 02:00 PM, +0000 UTC"
+            },
+            {
+              "position": 100,
+              "title": "Altruist lanza Hazel, una plataforma de IA para los profesionales de la gestión patrimonial",
+              "source": {
+                "name": "Funds Society",
+                "icon": "https://encrypted-tbn1.gstatic.com/faviconV2?url=https://www.fundssociety.com&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+              },
+              "link": "https://www.fundssociety.com/es/noticias/negocio/altruist-lanza-hazel-una-plataforma-de-ia-para-los-profesionales-de-la-gestion-patrimonial/",
+              "thumbnail": "https://www.fundssociety.com/wp-content/uploads/2025/09/Nombramientos-Guada-3-1.jpg",
+              "thumbnail_small": "https://news.google.com/api/attachments/CC8iK0NnNHdWbVJWZVhGSlNVSnViMmMzVFJDYkF4anFCU2dLTWdZSk1aVElOZ2M",
+              "date": "09/08/2025, 06:18 PM, +0000 UTC"
+            }
+          ],
+          "menu_links": [
+            {
+              "title": "Colombia",
+              "topic_token": "CAAqJggKIiBDQkFTRWdvSUwyMHZNREZzY3pJU0JtVnpMVFF4T1NnQVAB",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqJggKIiBDQkFTRWdvSUwyMHZNREZzY3pJU0JtVnpMVFF4T1NnQVAB"
+            },
+            {
+              "title": "Internacional",
+              "topic_token": "CAAqLAgKIiZDQkFTRmdvSUwyMHZNRGx1YlY4U0JtVnpMVFF4T1JvQ1EwOG9BQVAB",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqLAgKIiZDQkFTRmdvSUwyMHZNRGx1YlY4U0JtVnpMVFF4T1JvQ1EwOG9BQVAB"
+            },
+            {
+              "title": "Tus noticias locales",
+              "topic_token": "CAAqHAgKIhZDQklTQ2pvSWJHOWpZV3hmZGpJb0FBUAE",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqHAgKIhZDQklTQ2pvSWJHOWpZV3hmZGpJb0FBUAE"
+            },
+            {
+              "title": "Negocios",
+              "topic_token": "CAAqLAgKIiZDQkFTRmdvSUwyMHZNRGx6TVdZU0JtVnpMVFF4T1JvQ1EwOG9BQVAB",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqLAgKIiZDQkFTRmdvSUwyMHZNRGx6TVdZU0JtVnpMVFF4T1JvQ1EwOG9BQVAB"
+            },
+            {
+              "title": "Ciencia y tecnología",
+              "topic_token": "CAAqLQgKIidDQkFTRndvSkwyMHZNR1ptZHpWbUVnWmxjeTAwTVRrYUFrTlBLQUFQAQ",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqLQgKIidDQkFTRndvSkwyMHZNR1ptZHpWbUVnWmxjeTAwTVRrYUFrTlBLQUFQAQ"
+            },
+            {
+              "title": "Entretenimiento",
+              "topic_token": "CAAqLAgKIiZDQkFTRmdvSUwyMHZNREpxYW5RU0JtVnpMVFF4T1JvQ1EwOG9BQVAB",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqLAgKIiZDQkFTRmdvSUwyMHZNREpxYW5RU0JtVnpMVFF4T1JvQ1EwOG9BQVAB"
+            },
+            {
+              "title": "Deportes",
+              "topic_token": "CAAqLAgKIiZDQkFTRmdvSUwyMHZNRFp1ZEdvU0JtVnpMVFF4T1JvQ1EwOG9BQVAB",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqLAgKIiZDQkFTRmdvSUwyMHZNRFp1ZEdvU0JtVnpMVFF4T1JvQ1EwOG9BQVAB"
+            },
+            {
+              "title": "Salud",
+              "topic_token": "CAAqJggKIiBDQkFTRWdvSUwyMHZNR3QwTlRFU0JtVnpMVFF4T1NnQVAB",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqJggKIiBDQkFTRWdvSUwyMHZNR3QwTlRFU0JtVnpMVFF4T1NnQVAB"
+            }
+          ],
+          "related_topics": [
+            {
+              "topic_token": "CAAqJQgKIh9DQkFTRVFvSEwyMHZNRzFyZWhJR1pYTXROREU1S0FBUAE",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqJQgKIh9DQkFTRVFvSEwyMHZNRzFyZWhJR1pYTXROREU1S0FBUAE",
+              "title": "Inteligencia Artificial"
+            },
+            {
+              "topic_token": "CAAqKAgKIiJDQkFTRXdvSkwyMHZNREZtYUdjekVnWmxjeTAwTVRrb0FBUAE",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqKAgKIiJDQkFTRXdvSkwyMHZNREZtYUdjekVnWmxjeTAwTVRrb0FBUAE",
+              "title": "Iași"
+            },
+            {
+              "topic_token": "CAAqJggKIiBDQkFTRWdvSUwyMHZNRE41YlRFU0JtVnpMVFF4T1NnQVAB",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqJggKIiBDQkFTRWdvSUwyMHZNRE41YlRFU0JtVnpMVFF4T1NnQVAB",
+              "title": "Ian McKellen"
+            },
+            {
+              "topic_token": "CAAqLQgKIidDQkFTRndvTkwyY3ZNVEYwYm1NNGRIcGpkQklHWlhNdE5ERTVLQUFQAQ",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqLQgKIidDQkFTRndvTkwyY3ZNVEYwYm1NNGRIcGpkQklHWlhNdE5ERTVLQUFQAQ",
+              "title": "Parano-IA"
+            },
+            {
+              "topic_token": "CAAqKAgKIiJDQkFTRXdvSkwyMHZNREV4ZUdjMUVnWmxjeTAwTVRrb0FBUAE",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqKAgKIiJDQkFTRXdvSkwyMHZNREV4ZUdjMUVnWmxjeTAwTVRrb0FBUAE",
+              "title": "A.I. Inteligencia artificial"
+            },
+            {
+              "topic_token": "CAAqJQgKIh9DQkFTRVFvSEwyMHZNR2d6ZVJJR1pYTXROREU1S0FBUAE",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&topic_token=CAAqJQgKIh9DQkFTRVFvSEwyMHZNR2d6ZVJJR1pYTXROREU1S0FBUAE",
+              "title": "Argelia"
+            }
+          ],
+          "related_publications": [
+            {
+              "publication_token": "CAAqJggKIiBDQklTRWdnTWFnNEtER2xoYldKcFpXNTBaUzVsY3lnQVAB",
+              "serpapi_link": "https://serpapi.com/search.json?engine=google_news&gl=co&publication_token=CAAqJggKIiBDQklTRWdnTWFnNEtER2xoYldKcFpXNTBaUzVsY3lnQVAB",
+              "title": "iambiente",
+              "thumbnail": "https://encrypted-tbn1.gstatic.com/faviconV2?url=http://iambiente.es&client=NEWS_360&size=96&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+            }
+          ]
+        }
+      }
+    ],
+    "OpenAI buscar web": [
+      {
+        "json": {
+          "id": "resp_68bf44b8dd908195b41e2b3363933b1900d05ecd6291ea15",
+          "object": "response",
+          "created_at": 1757365433,
+          "status": "completed",
+          "background": false,
+          "error": null,
+          "incomplete_details": null,
+          "instructions": null,
+          "max_output_tokens": null,
+          "max_tool_calls": null,
+          "model": "gpt-5-mini-2025-08-07",
+          "output": [
+            {
+              "id": "rs_68bf44b9936081958ee50033e34744d900d05ecd6291ea15",
+              "type": "reasoning",
+              "summary": []
+            },
+            {
+              "id": "ws_68bf44c1b5cc8195bce17aa039c3a25500d05ecd6291ea15",
+              "type": "web_search_call",
+              "status": "completed",
+              "action": {
+                "type": "search"
+              }
+            },
+            {
+              "id": "rs_68bf44c3115c81958c58dbbd0ed33c8100d05ecd6291ea15",
+              "type": "reasoning",
+              "summary": []
+            },
+            {
+              "id": "msg_68bf44d56c40819583101698d8b51c9200d05ecd6291ea15",
+              "type": "message",
+              "status": "completed",
+              "content": [
+                {
+                  "type": "output_text",
+                  "annotations": [],
+                  "logprobs": [],
+                  "text": "Frente a limitaciones de la IA, empresas reponen talento humano para corregir errores, elevar calidad y garantizar seguridad. La automatización no sustituye la experiencia: humanos y máquinas son complementos estratégicos. 🤝🧠 #IA #TalentoHumano #Automatización #Tecnología #Empleo"
+                }
+              ],
+              "role": "assistant"
+            }
+          ],
+          "parallel_tool_calls": true,
+          "previous_response_id": null,
+          "prompt_cache_key": null,
+          "reasoning": {
+            "effort": "medium",
+            "summary": null
+          },
+          "safety_identifier": null,
+          "service_tier": "default",
+          "store": true,
+          "temperature": 1,
+          "text": {
+            "format": {
+              "type": "text"
+            },
+            "verbosity": "medium"
+          },
+          "tool_choice": "auto",
+          "tools": [
+            {
+              "type": "web_search",
+              "filters": null,
+              "search_context_size": "medium",
+              "user_location": {
+                "type": "approximate",
+                "city": null,
+                "country": "US",
+                "region": null,
+                "timezone": null
+              }
+            }
+          ],
+          "top_logprobs": 0,
+          "top_p": 1,
+          "truncation": "disabled",
+          "usage": {
+            "input_tokens": 12548,
+            "input_tokens_details": {
+              "cached_tokens": 8448
+            },
+            "output_tokens": 2119,
+            "output_tokens_details": {
+              "reasoning_tokens": 2048
+            },
+            "total_tokens": 14667
+          },
+          "user": null,
+          "metadata": {}
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Ejecutar diariamente": {
+      "main": [
+        [
+          {
+            "node": "Buscador de noticias Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscador de noticias Google": {
+      "main": [
+        [
+          {
+            "node": "Definir título y link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Definir título y link": {
+      "main": [
+        [
+          {
+            "node": "OpenAI buscar web",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI buscar web": {
+      "main": [
+        [
+          {
+            "node": "Dividir outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dividir outputs": {
+      "main": [
+        [
+          {
+            "node": "Outputs Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outputs Loop": {
+      "main": [
+        [],
+        [
+          {
+            "node": "output_type=message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "output_type=message": {
+      "main": [
+        [
+          {
+            "node": "Definir texto IA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Iteración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Iteración": {
+      "main": [
+        [
+          {
+            "node": "Outputs Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Definir texto IA": {
+      "main": [
+        [
+          {
+            "node": "Generar imagen del post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar imagen del post": {
+      "main": [
+        [
+          {
+            "node": "Crear post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear post": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9d14575a-3e3a-47b3-b6ca-c4fb3765a476",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dbd75b40ff8c32ea274dd93a77f83119036c71be56506b2480bb718260fcb2b6"
+  },
+  "id": "6AGxa8WCvi15cmkE",
+  "tags": []
+}
